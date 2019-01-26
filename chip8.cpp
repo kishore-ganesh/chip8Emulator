@@ -1,6 +1,7 @@
 
 
 #include "chip8.h"
+
 using namespace std;
 
 
@@ -306,10 +307,10 @@ using namespace std;
             
             for(int j=0; j<8; j++)
             {
-                if(gfx[y+i][x+7-j]==1&(row&0x0001)==1){
+                if(gfx[V[y]+i][V[x]+7-j]==1&(row&0x0001)==1){
                     V[15] = 1;
                 }
-                gfx[y+i][x+7-j] ^= (row&0x0001);
+                gfx[V[y]+i][V[x]+7-j] ^= (row&0x0001);
                 // printf("GFX: %u, Row: %u \n", gfx[x+i][7-j], row);                                        
                 row=row>>1;
             }
@@ -594,21 +595,22 @@ using namespace std;
             V[i] = 0;
         }
 
-        keymap[SDL_SCANCODE_1]=0x1;
-        keymap[SDL_SCANCODE_2]=0x2;
-        keymap[SDL_SCANCODE_3]=0x3;
-        keymap[SDL_SCANCODE_Q]=0x4;
-        keymap[SDL_SCANCODE_W]=0x5; 
-        keymap[SDL_SCANCODE_E]=0x6;
-        keymap[SDL_SCANCODE_A]=0x7;
-        keymap[SDL_SCANCODE_S]=0x8;
-        keymap[SDL_SCANCODE_D]=0x9;
-        keymap[SDL_SCANCODE_Z]=0xA;
-        keymap[SDL_SCANCODE_X]=0xB;
-        keymap[SDL_SCANCODE_C]=0xC;
-        keymap[SDL_SCANCODE_R]=0xD;
-        keymap[SDL_SCANCODE_F]=0xE;
-        keymap[SDL_SCANCODE_V]=0xF;
+        keymap[SDL_SCANCODE_1]=0x0;
+        keymap[SDL_SCANCODE_2]=0x1;
+        keymap[SDL_SCANCODE_3]=0x2;
+        keymap[SDL_SCANCODE_Q]=0x3;
+        keymap[SDL_SCANCODE_W]=0x4; 
+        keymap[SDL_SCANCODE_E]=0x5;
+        keymap[SDL_SCANCODE_A]=0x6;
+        keymap[SDL_SCANCODE_S]=0x7;
+        keymap[SDL_SCANCODE_D]=0x8;
+        keymap[SDL_SCANCODE_Z]=0x9;
+        keymap[SDL_SCANCODE_X]=0xA;
+        keymap[SDL_SCANCODE_C]=0xB;
+        keymap[SDL_SCANCODE_R]=0xC;
+        keymap[SDL_SCANCODE_F]=0xD;
+        keymap[SDL_SCANCODE_V]=0xE;
+        keymap[SDL_SCANCODE_T]=0xF;
 
 
 
@@ -616,8 +618,8 @@ using namespace std;
     }
 
     void Chip8::skipIfKeyEqualsVX(){
-        printf("SKIP IF KEY EQUALS VX\n");
         short x = (opcode & 0x0F00 )>> 8;
+        printf("SKIP IF KEY EQUALS VX: %u\n", V[x]);
         if(key[V[x]]==1)
         {
             pc+=2;
@@ -626,8 +628,8 @@ using namespace std;
     }
 
     void Chip8::skipIfKeyNotEqualsVX(){
-        printf("SKIP IF KEY NOT EQUALS VX\n");
         short x = (opcode & 0x0F00 )>> 8;
+        printf("SKIP IF KEY NOT EQUALS VX %u\n", V[x]);
         if(key[V[x]]!=1)
         {
             pc+=2;
@@ -667,7 +669,9 @@ using namespace std;
             switch(e.type)
             {
                 case SDL_KEYDOWN: {
+                    
                     if(keymap.find(e.key.keysym.scancode)!=keymap.end()){
+                        printf("KEY IS: %u\n", keymap[e.key.keysym.scancode]);
                         key[keymap[e.key.keysym.scancode]] = 1;
                     }
                     break;
@@ -783,8 +787,3 @@ using namespace std;
     }
 
     
-    
-
-    //handle E, keys not done yet
-    //Set VX to Zero
-

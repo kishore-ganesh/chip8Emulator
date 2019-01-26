@@ -4,6 +4,7 @@
 #include<time.h>
 #include<map>
 #include<SDL2/SDL.h>
+#define CLOCKSPEED 1000
 
  class Chip8
     {
