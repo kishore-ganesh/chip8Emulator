@@ -1,0 +1,7 @@
+*.rom 
+Chip8Games
+.vscode
+log
+a.out
+
+
