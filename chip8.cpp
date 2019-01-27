@@ -1,10 +1,11 @@
 
 
 #include "chip8.h"
-
+#include<mutex>
 using namespace std;
 
-
+std::mutex delay_mutex;
+std::mutex sound_mutex;
 
     // int convertToDecimal(short x)
     // {
@@ -48,6 +49,7 @@ using namespace std;
     void Chip8::clearScreen()
     {
         printf("CLEARING SCREEN\n");
+        setDraw(true);
         for (int i = 0; i < (32); i++)
         {
             for(int j=0; j<64; j++)
@@ -128,7 +130,11 @@ using namespace std;
     void Chip8::jumpToAddress()
     {
         
+        
+        // stack[sp] = pc + 2;
         pc = opcode & 0x0FFF;
+        // sp++;
+        
         printf("PC JUMP IS: %u\n", pc);
     }
 
@@ -228,8 +234,17 @@ using namespace std;
     void Chip8::setVXToVXPlusVY()
     {
         printf("VX EQUALS VX PLUS VY\n");
+        
         short x = (opcode & 0x0F00 )>> 8;
         short y = (opcode & 0x00F0) >> 4;
+        if(V[x]+V[y]>0xFF)
+        {
+            V[15] = 1;
+        }
+
+        else{
+            V[15] = 0;
+        }
         V[x] += V[y];
     }
 
@@ -238,6 +253,14 @@ using namespace std;
         printf("VX EQUALS VX  MINUS VY\n");
         short x = (opcode & 0x0F00 )>> 8;
         short y = (opcode & 0x00F0) >> 4;
+
+        if(V[x]<V[y])
+        {
+            V[15] = 1;
+        }
+        else{
+            V[15] = 0;
+        }
         V[x] -= V[y];
     }
 
@@ -246,6 +269,14 @@ using namespace std;
         printf("VX EQUALS VY MINUS VX\n");
         short x = (opcode & 0x0F00 )>> 8;
         short y = (opcode & 0x00F0) >> 4;
+        if(V[y]<V[x])
+        {
+            V[15] = 1;
+        }
+
+        else{
+            V[15] = 0;
+        }
         V[x] = V[y] - V[x];
     }
 
@@ -299,6 +330,7 @@ using namespace std;
         unsigned short x = (opcode & 0x0F00)>>8;
         unsigned short y = (opcode &0x00F0)  >> 4;
         unsigned short n = opcode &0x000F;
+        setDraw(true);
         printf("DRAWING, x: %u, y: %u, n: %u,I: %u\n, ", x, y, n, I);
         V[15] = 0;
         for(int i = 0; i<n; i++)
@@ -307,7 +339,7 @@ using namespace std;
             
             for(int j=0; j<8; j++)
             {
-                if(gfx[V[y]+i][V[x]+7-j]==1&(row&0x0001)==1){
+                if(gfx[V[y]+i][V[x]+7-j]&(row&0x0001)){
                     V[15] = 1;
                 }
                 gfx[V[y]+i][V[x]+7-j] ^= (row&0x0001);
@@ -502,13 +534,14 @@ using namespace std;
     void Chip8::setDelayToVX(){
         printf("SET DELAY TO VX\n");
         short x = (opcode & 0x0F00 )>> 8;
-        delay_timer = V[x];
+        setDelay(V[x]);
+        
     }
 
     void Chip8::setSoundToVX(){
         printf("SET SOUND TO VX\n");
         short x = (opcode & 0x0F00 )>> 8;
-        sound_timer = V[x];
+        setSound(V[x]);
     }
 
 
@@ -549,6 +582,20 @@ using namespace std;
         {
             V[i] = memory[I+i];
         }
+    }
+
+    void  Chip8::setDelay(unsigned char value)
+    {
+        delay_mutex.lock();
+        delay_timer = value;
+        delay_mutex.unlock();
+    }
+
+    void Chip8::setSound(unsigned char value)
+    {
+        sound_mutex.lock();
+        sound_timer = value;
+        sound_mutex.unlock();
     }
 
     void Chip8::initialize()
@@ -653,17 +700,12 @@ using namespace std;
         pc+=2;
     }
 
-    void Chip8::emulateCycle()
-    {
-        
-        
-        //May have to change this
-        for(int i=0; i<16; i++)
-        {
-            key[i] = 0;
-        }
+    //Collision, and timing
 
-        SDL_Event e;
+    void Chip8::inputCycle(){
+        while(true)
+        {
+            SDL_Event e;
         while(SDL_PollEvent(&e)!=0)
         {
             switch(e.type)
@@ -677,11 +719,31 @@ using namespace std;
                     break;
                 }
 
+                case SDL_KEYUP:{
+                     if(keymap.find(e.key.keysym.scancode)!=keymap.end()){
+                        key[keymap[e.key.keysym.scancode]] = 0;
+                        printf("KEY UP: %u\n", keymap[e.key.keysym.scancode]);
+                    }
+                    break;
+                }
+
                 case SDL_QUIT: {
                     SDL_Quit();
                 }
             }
         }
+        }
+        
+    }
+
+    void Chip8::emulateCycle()
+    {
+        
+        
+        //May have to change this
+
+        SDL_Event e;
+        
         opcode = memory[pc] << 8 | memory[pc + 1];
         // cout<<"OPCODE: "<<memory[pc]<<" "<<endl;
         // pc += 2;
@@ -775,15 +837,33 @@ using namespace std;
         }
         }
 
-        if (delay_timer > 0)
+        
+    }
+
+    void Chip8::timerCycle(){
+        while(true)
         {
-            delay_timer--;
+            SDL_Delay(1000/60);
+            if (delay_timer > 0)
+        {
+            setDelay(delay_timer-1);
+            
         }
 
         if (sound_timer > 0)
         {
-            sound_timer--;
+            setSound(sound_timer-1);
         }
+        }
+        
+    }
+
+    bool Chip8::shouldDraw(){
+        return drawFlag;
+    }
+
+    void Chip8::setDraw(bool value){
+        drawFlag = value;
     }
 
     

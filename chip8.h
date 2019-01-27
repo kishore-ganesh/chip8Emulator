@@ -19,6 +19,7 @@
         unsigned short sp;
         unsigned char key[16];
         std::map<SDL_Keycode, short> keymap; 
+        bool drawFlag;
 
       public:
         unsigned char gfx[32][64]; //Make this private later
@@ -76,6 +77,12 @@
         void fillV0ToVX();
         void initialize();
         void emulateCycle();
+        bool shouldDraw();
+        void setDraw(bool flag);
+        void inputCycle();
+        void setDelay(unsigned char value);
+        void setSound(unsigned char value);
+        void timerCycle();
         
     };
 

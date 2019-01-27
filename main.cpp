@@ -1,5 +1,6 @@
 #include "chip8.h"
 #include <SDL2/SDL.h>
+#include<thread>
 #define PIXEL_SIZE 16
 int main(int argc, char *argv[])
 {
@@ -15,14 +16,20 @@ int main(int argc, char *argv[])
     screenSurface  = SDL_GetWindowSurface(window);
     SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
     SDL_UpdateWindowSurface(window);
+
+    std::thread background_thread(&Chip8::inputCycle, &chip8);
+    std::thread timer_thread(&Chip8::timerCycle, &chip8);
     
     while(true){
         SDL_Event e;
-        SDL_Delay(1000 / 60);
+        // SDL_Delay(2);
     
-        SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
+        
         
         chip8.emulateCycle();
+        if(chip8.shouldDraw())
+        {
+            SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
         for(int i=0; i<32; i++)
         {
             for(int j=0; j<64; j++)
@@ -38,6 +45,11 @@ int main(int argc, char *argv[])
                 }
             }
         }
+
+        chip8.setDraw(false);
+        }
+
+        
         
         SDL_UpdateWindowSurface(window);
 
