@@ -17,12 +17,12 @@ int main(int argc, char *argv[])
     SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
     SDL_UpdateWindowSurface(window);
 
-    std::thread background_thread(&Chip8::inputCycle, &chip8);
+    // std::thread background_thread(&Chip8::inputCycle, &chip8);
     std::thread timer_thread(&Chip8::timerCycle, &chip8);
     
     while(true){
         SDL_Event e;
-        // SDL_Delay(2);
+        SDL_Delay(1);
     
         
         

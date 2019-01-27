@@ -237,7 +237,7 @@ std::mutex sound_mutex;
         
         short x = (opcode & 0x0F00 )>> 8;
         short y = (opcode & 0x00F0) >> 4;
-        if(V[x]+V[y]>0xFF)
+        if((unsigned int)V[x]+V[y]>0xFF)
         {
             V[15] = 1;
         }
@@ -256,10 +256,10 @@ std::mutex sound_mutex;
 
         if(V[x]<V[y])
         {
-            V[15] = 1;
+            V[15] = 0;
         }
         else{
-            V[15] = 0;
+            V[15] = 1;
         }
         V[x] -= V[y];
     }
@@ -271,11 +271,11 @@ std::mutex sound_mutex;
         short y = (opcode & 0x00F0) >> 4;
         if(V[y]<V[x])
         {
-            V[15] = 1;
+            V[15] = 0;
         }
 
         else{
-            V[15] = 0;
+            V[15] = 1;
         }
         V[x] = V[y] - V[x];
     }
@@ -601,6 +601,7 @@ std::mutex sound_mutex;
     void Chip8::initialize()
     {
         pc = 0x200;
+        srand(time(NULL));
         opcode = 0;
         I = 0;
         sp = 0;
@@ -742,8 +743,35 @@ std::mutex sound_mutex;
         
         //May have to change this
 
-        SDL_Event e;
         
+        
+        SDL_Event e;
+        while(SDL_PollEvent(&e)!=0)
+        {
+            switch(e.type)
+            {
+                case SDL_KEYDOWN: {
+                    
+                    if(keymap.find(e.key.keysym.scancode)!=keymap.end()){
+                        printf("KEY IS: %u\n", keymap[e.key.keysym.scancode]);
+                        key[keymap[e.key.keysym.scancode]] = 1;
+                    }
+                    break;
+                }
+
+                case SDL_KEYUP:{
+                     if(keymap.find(e.key.keysym.scancode)!=keymap.end()){
+                        key[keymap[e.key.keysym.scancode]] = 0;
+                        printf("KEY UP: %u\n", keymap[e.key.keysym.scancode]);
+                    }
+                    break;
+                }
+
+                case SDL_QUIT: {
+                    SDL_Quit();
+                }
+            }
+        }
         opcode = memory[pc] << 8 | memory[pc + 1];
         // cout<<"OPCODE: "<<memory[pc]<<" "<<endl;
         // pc += 2;

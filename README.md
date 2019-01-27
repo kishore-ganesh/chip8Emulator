@@ -3,8 +3,7 @@ A C++ implementation of an  emulator for the CHIP8 System
 
 This is a work in progress implementation of an emulator for the CHIP8 system. 34 opcodes have been implemented, and both graphics and input seem to be working fine(For most games).
 
-Space Invaders is working correctly, as is Tetris. There are bugs in Pong, which we're working on.
-
+Space Invaders is working correctly, as is Tetris, Blink, Pong, Maze and more. We haven't tested all games, but we've fixed bugs in the above games, which are now working fine.
 
 SDL has been used for graphics, input and introducing timed delays.
 
